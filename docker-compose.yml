@@ -13,8 +13,8 @@ services:
       - "--certificatesresolvers.letsencrypt.acme.email=${SSL_EMAIL}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/acme.json"
     ports:
-      - "8080:80"
-      - "8443:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./traefik/acme.json:/acme.json"
