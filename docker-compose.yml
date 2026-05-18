@@ -1,26 +1,4 @@
 services:
-  traefik:
-    image: traefik:v3.0
-    container_name: traefik
-    restart: unless-stopped
-    command:
-      - "--api.dashboard=false"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.email=${SSL_EMAIL}"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/acme.json"
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/acme.json:/acme.json"
-    networks:
-      - web
-
   mariadb:
     image: mariadb:11
     container_name: mariadb
@@ -33,7 +11,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     networks:
-      - web
+      - internal
 
   wordpress:
     image: wordpress:6-apache
@@ -48,20 +26,17 @@ services:
       WORDPRESS_DB_NAME: ${DB_NAME}
       WORDPRESS_TABLE_PREFIX: wp_
       WORDPRESS_DEBUG: 0
+      WORDPRESS_CONFIG_EXTRA: |
+        define('FORCE_SSL_ADMIN', true);
+        if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+          \$_SERVER['HTTPS'] = 'on';
+        }
+    ports:
+      - "8080:80"
     volumes:
       - wp_data:/var/www/html
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.wordpress.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.wordpress.entrypoints=websecure"
-      - "traefik.http.routers.wordpress.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.wordpress-http.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.wordpress-http.entrypoints=web"
-      - "traefik.http.routers.wordpress-http.middlewares=redirect-https"
-      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
-      - "traefik.http.services.wordpress.loadbalancer.server.port=80"
     networks:
-      - web
+      - internal
 
   wp-cli:
     image: wordpress:cli
@@ -77,10 +52,10 @@ services:
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
       WORDPRESS_DB_NAME: ${DB_NAME}
     networks:
-      - web
+      - internal
 
 networks:
-  web:
+  internal:
     driver: bridge
 
 volumes:
