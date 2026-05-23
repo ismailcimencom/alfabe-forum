@@ -32,7 +32,11 @@ forum.alfabe.co ──► Cloudflare (Full strict SSL)
 ### SSL
 - Let's Encrypt + Cloudflare DNS challenge
 - Sertifikalar: `/etc/letsencrypt/live/alfabe.co/`
-- Yenileme: `scripts/renew-cert.sh` (cron: `0 3 * * *`)
+- Yenileme: `scripts/renew-cert.sh` (cron: `0 3:30 * * *`)
+
+### Yedekleme
+- `scripts/backup.sh` — Günlük `03:00`'da her iki DB'yi `mysqldump` → gzip `/backup/`, 7 gün retention
+- Kurulu cron: `0 3 * * * /opt/alfabe-forum/scripts/backup.sh >/dev/null 2>&1`
 
 ## 🚀 Kurulum
 
