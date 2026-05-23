@@ -21,6 +21,7 @@ if [ ! -f .env ]; then
   echo -e "   ${CYAN}nano .env${NC}"
   echo ""
   echo -e "Gerekli alanlar: ${YELLOW}DOMAIN${NC}, ${YELLOW}SSL_EMAIL${NC}"
+  echo -e "Sunucuda deploy için ${YELLOW}NGINX_PORT=80${NC} ayarlayın."
   echo -e "Geri kalanı (şifreler) script otomatik doldurur."
   echo ""
   exit 1
@@ -66,12 +67,6 @@ if [ "$NEEDS_SAVE" = true ]; then
   fi
   echo -e "${GREEN}✓ Şifreler oluşturuldu ve .env dosyasına kaydedildi${NC}"
 fi
-
-# --- acme.json ---
-mkdir -p traefik
-touch traefik/acme.json
-chmod 600 traefik/acme.json
-echo -e "${GREEN}✓ traefik/acme.json hazır${NC}"
 
 # --- Container'ları başlat ---
 echo -e "${YELLOW}Docker container'lar başlatılıyor...${NC}"
@@ -131,5 +126,5 @@ echo -e "  Kullanıcı:  ${WP_ADMIN_USER:-admin}"
 echo -e "  Şifre:      ${YELLOW}$WP_ADMIN_PASSWORD${NC}"
 echo -e "${CYAN}----------------------------------------${NC}"
 echo -e "  DNS ayarlarını ${DOMAIN} → sunucu IP'sine yapmayı unutmayın!"
-echo -e "  SSL sertifikası Let's Encrypt ile otomatik oluşacak."
+echo -e "  SSL sertifikası için Certbot veya Cloudflare kullanın."
 echo -e "${CYAN}========================================${NC}"
