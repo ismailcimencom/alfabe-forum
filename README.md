@@ -50,7 +50,64 @@ docker compose run --rm wp-cli core install \
   --admin_email=$WP_ADMIN_EMAIL
 ```
 
-## 🔧 Geliştirme
+## 🛠 Pratik Komutlar
+
+```bash
+# Loglar
+docker compose logs -f nginx
+docker compose logs -f wordpress
+
+# Restart
+docker compose restart nginx
+
+# Container içine gir
+docker compose exec nginx sh
+docker compose exec wordpress bash
+
+# Nginx config test
+docker compose exec nginx nginx -t
+
+# Sertifika yenile (manuel)
+/opt/alfabe-forum/scripts/renew-cert.sh
+
+# Yedek al (manuel)
+/opt/alfabe-forum/scripts/backup.sh
+```
+
+## ♻️ Yedekten Geri Yükleme
+
+```bash
+# Alfabemail DB
+gunzip -c /backup/alfabemail_2026-05-23.sql.gz \
+  | docker compose -f /opt/alfabemail/compose.yaml exec -T mysql \
+    mysql -u sail -p"$DB_PASSWORD" alfabemail
+
+# Forum DB
+gunzip -c /backup/forum_2026-05-23.sql.gz \
+  | docker compose exec -T mariadb \
+    mysql -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME"
+```
+
+## ➕ Yeni Site Ekleme (ör. oyun.alfabe.co)
+
+1. **DNS:** Cloudflare'de `oyun.alfabe.co` → `2.59.119.28` (A kaydı, turuncu proxy)
+2. **Proxy:** `nginx/default.conf`'a yeni `server` block ekle:
+   ```nginx
+   server {
+       listen 443 ssl;
+       server_name oyun.alfabe.co;
+       ssl_certificate /etc/letsencrypt/live/alfabe.co/fullchain.pem;
+       ssl_certificate_key /etc/letsencrypt/live/alfabe.co/privkey.pem;
+       location / {
+           proxy_pass http://oyun:80;
+       }
+   }
+   ```
+3. **SSL:** Sertifikaya domain ekle: `certbot --expand -d alfabe.co -d oyun.alfabe.co`
+4. **Ağ:** Yeni container'ı `alfabe_net` network'üne bağla
+5. **Restart:** `docker compose restart nginx`
+
+## 🔧 Geliştirme (Local)
 
 ```bash
 NGINX_PORT=8081 docker compose up -d
